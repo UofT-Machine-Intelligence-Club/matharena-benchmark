@@ -1,0 +1,16 @@
+model: LLM360/K2-Think
+api: vllm
+max_tokens: 64000
+temperature: 1.0
+top_p: 0.95
+concurrent_requests: 16
+read_cost: 0
+write_cost: 0
+human_readable_id: K2-Think
+date: "2025-09-11"
+other_params:
+  open: true
+  creator: MBZUAI
+  parameters: 32
+  active_parameters: 32
+  huggingface_id: LLM360/K2-Think

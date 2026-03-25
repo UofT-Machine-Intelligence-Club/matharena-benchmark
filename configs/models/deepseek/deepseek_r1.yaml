@@ -1,0 +1,15 @@
+model: deepseek-ai/DeepSeek-R1
+api: together
+max_tokens: 32000
+temperature: 0.6
+top_p: 0.95
+read_cost: 0.5
+write_cost: 2.18
+human_readable_id: DeepSeek-R1
+date: "2025-01-21"
+other_params:
+  open: true
+  creator: DeepSeek
+  parameters: 671
+  active_parameters: 37
+  huggingface_id: deepseek-ai/DeepSeek-R1

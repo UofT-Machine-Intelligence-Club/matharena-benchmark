@@ -1,0 +1,12 @@
+model: o1
+api: openai
+max_tokens: null
+read_cost: 15
+write_cost: 60
+human_readable_id: o1 (medium)
+batch_processing: true
+use_openai_responses_api: true
+date: "2024-09-12"
+other_params:
+  open: false
+  creator: OpenAI

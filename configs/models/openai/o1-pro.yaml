@@ -1,0 +1,13 @@
+model: o1-pro--high
+api: openai
+max_tokens: null
+read_cost: 150
+write_cost: 600
+human_readable_id: o1-pro (high)
+batch_processing: false
+use_openai_responses_api: true
+concurrent_requests: 1
+date: "2025-03-19"
+other_params:
+  open: false
+  creator: OpenAI
