@@ -11,6 +11,18 @@ import json
 import os
 from pathlib import Path
 
+import yaml
+
+
+def _load_model_max_tokens(model_config_path: str) -> int | None:
+    """Load max_tokens from a model config YAML file."""
+    path = Path("configs/models") / f"{model_config_path}.yaml"
+    if not path.exists():
+        return None
+    with path.open("r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+    return config.get("max_tokens")
+
 
 def export(comp: str, model_filter: str | None, output_path: str):
     outputs_dir = Path("outputs") / comp
@@ -20,6 +32,9 @@ def export(comp: str, model_filter: str | None, output_path: str):
         return
 
     records = []
+
+    # Cache model max_tokens lookups
+    max_tokens_cache: dict[str, int | None] = {}
 
     # Walk model directories
     for model_dir in sorted(outputs_dir.rglob("*.json")):
@@ -31,6 +46,11 @@ def export(comp: str, model_filter: str | None, output_path: str):
 
         if model_filter and model_filter not in model_name:
             continue
+
+        # Look up configured max_tokens for this model
+        if model_name not in max_tokens_cache:
+            max_tokens_cache[model_name] = _load_model_max_tokens(model_name)
+        configured_max_tokens = max_tokens_cache[model_name]
 
         problem_idx = raw.get("idx")
         n_runs = raw.get("N", 0)
@@ -48,6 +68,14 @@ def export(comp: str, model_filter: str | None, output_path: str):
                     elif msg.get("type") == "response" or "type" not in msg:
                         response_parts.append(msg.get("content", ""))
 
+            # Detect truncation: output_tokens hit the configured max_tokens limit
+            cost_entry = raw.get("detailed_costs", [{}])[run_idx] if run_idx < len(raw.get("detailed_costs", [])) else {}
+            output_tokens = cost_entry.get("output_tokens", 0)
+            truncated = (
+                configured_max_tokens is not None
+                and output_tokens >= configured_max_tokens
+            )
+
             record = {
                 "competition": comp,
                 "model": model_name,
@@ -58,10 +86,13 @@ def export(comp: str, model_filter: str | None, output_path: str):
                 "model_answer": raw["answers"][run_idx] if run_idx < len(raw.get("answers", [])) else None,
                 "correct": raw["correct"][run_idx] if run_idx < len(raw.get("correct", [])) else None,
                 "warning": raw["warnings"][run_idx] if run_idx < len(raw.get("warnings", [])) else None,
+                "truncated": truncated,
+                "output_tokens": output_tokens,
+                "max_tokens": configured_max_tokens,
                 "thinking_trace": "\n\n".join(thinking_parts),
                 "response": "\n\n".join(response_parts),
                 "messages_raw": messages,
-                "cost": raw.get("detailed_costs", [{}])[run_idx] if run_idx < len(raw.get("detailed_costs", [])) else {},
+                "cost": cost_entry,
                 "problem_types": raw.get("types", []),
                 "source": raw.get("source"),
             }
